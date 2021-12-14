@@ -10,19 +10,19 @@ const (
 	cmd_SET_TOKEN
 )
 
-type authMessage struct{
-	action int
-	email string
-	password string
-	token string
+type authMessage struct {
+	action    int
+	email     string
+	password  string
+	token     string
 	result_ch chan error
 }
 
 func (c *Client) DoLogin() error {
 	action := authMessage{
-		action: cmd_DO_LOGIN,
-		email: c.GatewayLoginEmail,
-		password: c.GatewayLoginPassword,
+		action:    cmd_DO_LOGIN,
+		email:     c.GatewayLoginEmail,
+		password:  c.GatewayLoginPassword,
 		result_ch: make(chan error),
 	}
 	c.auth_ch <- &action
@@ -31,9 +31,9 @@ func (c *Client) DoLogin() error {
 
 func (c *Client) checkLogin() error {
 	action := authMessage{
-		action: cmd_CHECK_LOGIN,
-		email: c.GatewayLoginEmail,
-		password: c.GatewayLoginPassword,
+		action:    cmd_CHECK_LOGIN,
+		email:     c.GatewayLoginEmail,
+		password:  c.GatewayLoginPassword,
 		result_ch: make(chan error),
 	}
 	c.auth_ch <- &action
@@ -119,9 +119,9 @@ type loginResponse struct {
 func (c *Client) performLogin(email, password string) (string, error) {
 	c.logf("Attempting login...")
 	ld := loginData{
-		Username: "customer",
-		Email: email,
-		Password: password,
+		Username:   "customer",
+		Email:      email,
+		Password:   password,
 		ForceSmOff: false,
 	}
 	resp := loginResponse{}
@@ -144,4 +144,3 @@ func (c *Client) performLogin(email, password string) (string, error) {
 		return "", errors.New("No auth token returned from login API call")
 	}
 }
-

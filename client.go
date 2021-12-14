@@ -1,16 +1,16 @@
 package powerwall
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
-	"bytes"
 	"strings"
-	"fmt"
+	"time"
 )
 
 var logFunc = func(v ...interface{}) {}
@@ -25,13 +25,13 @@ func SetErrFunc(f func(string, error)) {
 	errFunc = f
 }
 
-type Client struct{
-	GatewayAddress string
-	GatewayLoginEmail string
+type Client struct {
+	GatewayAddress       string
+	GatewayLoginEmail    string
 	GatewayLoginPassword string
-	httpClient http.Client
-	token_ch chan string
-	auth_ch chan *authMessage
+	httpClient           http.Client
+	token_ch             chan string
+	auth_ch              chan *authMessage
 }
 
 func (c *Client) logf(format string, v ...interface{}) {
@@ -58,16 +58,16 @@ func NewClient(gatewayAddress string, gatewayLoginEmail string, gatewayLoginPass
 	}
 	httpClient := http.Client{
 		Transport: tr,
-		Timeout: time.Second * 2, // Timeout after 2 seconds
+		Timeout:   time.Second * 2, // Timeout after 2 seconds
 	}
 
 	c := &Client{
-		GatewayAddress: gatewayAddress,
-		GatewayLoginEmail: gatewayLoginEmail,
+		GatewayAddress:       gatewayAddress,
+		GatewayLoginEmail:    gatewayLoginEmail,
 		GatewayLoginPassword: gatewayLoginPassword,
-		httpClient: httpClient,
-		token_ch: make(chan string),
-		auth_ch: make(chan *authMessage),
+		httpClient:           httpClient,
+		token_ch:             make(chan string),
+		auth_ch:              make(chan *authMessage),
 	}
 
 	go c.authManager()
@@ -89,7 +89,7 @@ func (c *Client) FetchTLSCert() (*x509.Certificate, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
-	conn, err := tls.Dial("tcp", c.GatewayAddress + ":443", tlsConfig)
+	conn, err := tls.Dial("tcp", c.GatewayAddress+":443", tlsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +100,9 @@ func (c *Client) FetchTLSCert() (*x509.Certificate, error) {
 }
 
 func (c *Client) doHttpRequest(api string, method string, payload []byte, contentType string) ([]byte, error) {
-	type errorResponse struct{
-		Code int `json:"code"`
-		Error string `json:"error"`
+	type errorResponse struct {
+		Code    int    `json:"code"`
+		Error   string `json:"error"`
 		Message string `json:"message"`
 	}
 
@@ -112,8 +112,8 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 
 	url := url.URL{
 		Scheme: "https",
-		Host: c.GatewayAddress,
-		Path: "api/" + api,
+		Host:   c.GatewayAddress,
+		Path:   "api/" + api,
 	}
 
 	c.logf("Calling API: method=%s url=%s body=%s", method, url.String(), logBody(api, payload, contentType))
@@ -142,7 +142,7 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 		authToken := c.GetAuthToken()
 		if authToken != "" {
 			cookie := &http.Cookie{
-				Name: "AuthCookie",
+				Name:  "AuthCookie",
 				Value: authToken,
 			}
 			req.AddCookie(cookie)
@@ -164,7 +164,7 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 			}
 			c.logf("Re-auth completed.  Retrying original request.")
 			cookie := &http.Cookie{
-				Name: "AuthCookie",
+				Name:  "AuthCookie",
 				Value: c.GetAuthToken(),
 			}
 			req.Header.Del("Cookie")
@@ -187,17 +187,17 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 		errInfo := errorResponse{}
 		_ = json.Unmarshal(body, &errInfo)
 		return nil, AuthFailure{
-			URL: url,
+			URL:       url,
 			ErrorText: errInfo.Error,
-			Message: errInfo.Message,
+			Message:   errInfo.Message,
 		}
 	} else if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		// We got an unexpected response
 		c.logf("Request failed: status=%d body=%s", resp.StatusCode, logBody("", body, resp.Header.Get("Content-Type")))
 		return body, ApiError{
-			URL: url,
+			URL:        url,
 			StatusCode: resp.StatusCode,
-			Body: body,
+			Body:       body,
 		}
 	}
 
@@ -247,4 +247,3 @@ func (c *Client) apiPostJson(api string, payload interface{}, result interface{}
 	}
 	return nil
 }
-

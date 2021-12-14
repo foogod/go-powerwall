@@ -1,9 +1,9 @@
 package powerwall
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
-	"encoding/json"
 )
 
 // Most time values in the API are produced in standard ISO-8601 format, which
@@ -84,4 +84,3 @@ func (v *DecodedAlert) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-
