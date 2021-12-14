@@ -21,8 +21,8 @@ type authMessage struct {
 func (c *Client) DoLogin() error {
 	action := authMessage{
 		action:    cmd_DO_LOGIN,
-		email:     c.GatewayLoginEmail,
-		password:  c.GatewayLoginPassword,
+		email:     c.gatewayLoginEmail,
+		password:  c.gatewayLoginPassword,
 		result_ch: make(chan error),
 	}
 	c.auth_ch <- &action
@@ -32,8 +32,8 @@ func (c *Client) DoLogin() error {
 func (c *Client) checkLogin() error {
 	action := authMessage{
 		action:    cmd_CHECK_LOGIN,
-		email:     c.GatewayLoginEmail,
-		password:  c.GatewayLoginPassword,
+		email:     c.gatewayLoginEmail,
+		password:  c.gatewayLoginPassword,
 		result_ch: make(chan error),
 	}
 	c.auth_ch <- &action

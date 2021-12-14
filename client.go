@@ -26,9 +26,9 @@ func SetErrFunc(f func(string, error)) {
 }
 
 type Client struct {
-	GatewayAddress       string
-	GatewayLoginEmail    string
-	GatewayLoginPassword string
+	gatewayAddress       string
+	gatewayLoginEmail    string
+	gatewayLoginPassword string
 	httpClient           http.Client
 	token_ch             chan string
 	auth_ch              chan *authMessage
@@ -62,9 +62,9 @@ func NewClient(gatewayAddress string, gatewayLoginEmail string, gatewayLoginPass
 	}
 
 	c := &Client{
-		GatewayAddress:       gatewayAddress,
-		GatewayLoginEmail:    gatewayLoginEmail,
-		GatewayLoginPassword: gatewayLoginPassword,
+		gatewayAddress:       gatewayAddress,
+		gatewayLoginEmail:    gatewayLoginEmail,
+		gatewayLoginPassword: gatewayLoginPassword,
 		httpClient:           httpClient,
 		token_ch:             make(chan string),
 		auth_ch:              make(chan *authMessage),
@@ -89,7 +89,7 @@ func (c *Client) FetchTLSCert() (*x509.Certificate, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
-	conn, err := tls.Dial("tcp", c.GatewayAddress+":443", tlsConfig)
+	conn, err := tls.Dial("tcp", c.gatewayAddress+":443", tlsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 
 	url := url.URL{
 		Scheme: "https",
-		Host:   c.GatewayAddress,
+		Host:   c.gatewayAddress,
 		Path:   "api/" + api,
 	}
 
