@@ -7,7 +7,7 @@ import (
 
 ///////////////////////////////////////////////////////////////////////////////
 
-type MeterAggregates struct {
+type MeterAggregatesData struct {
 	LastCommunicationTime             time.Time `json:"last_communication_time"`
 	InstantPower                      float32   `json:"instant_power"`
 	InstantReactivePower              float32   `json:"instant_reactive_power"`
@@ -27,16 +27,16 @@ type MeterAggregates struct {
 	InstantTotalCurrent               float32   `json:"instant_total_current"`
 }
 
-func (c *Client) GetMetersAggregates() (*map[string]MeterAggregates, error) {
+func (c *Client) GetMetersAggregates() (*map[string]MeterAggregatesData, error) {
 	c.checkLogin()
-	result := map[string]MeterAggregates{}
+	result := map[string]MeterAggregatesData{}
 	err := c.apiGetJson("meters/aggregates", &result)
 	return &result, err
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-type MeterInfo struct {
+type MeterData struct {
 	ID int `json:"id"`
 	Location string `json:"location"`
 	Type string `json:"type"`
@@ -85,9 +85,9 @@ type MeterInfo struct {
 	} `json:"ct_voltage_references"`
 }
 
-func (c *Client) GetMeterInfo(meter string) (*[]MeterInfo, error) {
+func (c *Client) GetMeters(meter string) (*[]MeterData, error) {
 	c.checkLogin()
-	result := []MeterInfo{}
+	result := []MeterData{}
 	err := c.apiGetJson("meters/" + url.PathEscape(meter), &result)
 	return &result, err
 }

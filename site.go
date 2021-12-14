@@ -2,7 +2,7 @@ package powerwall
 
 ///////////////////////////////////////////////////////////////////////////////
 
-type Status struct{
+type StatusData struct{
 	Din string `json:"din"`
 	StartTime NonIsoTime `json:"start_time"`
 	UpTime Duration `json:"up_time_seconds"`
@@ -17,15 +17,15 @@ type Status struct{
 	CellularDisabled bool `json:"cellular_disabled"`
 }
 
-func (c *Client) GetStatus() (*Status, error) {
-	result := Status{}
+func (c *Client) GetStatus() (*StatusData, error) {
+	result := StatusData{}
 	err := c.apiGetJson("status", &result)
 	return &result, err
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-type SiteInfo struct{
+type SiteInfoData struct{
 	SiteName string `json:"site_name"`
 	TimeZone string `json:"timezone"`
 	MaxSiteMeterPowerKW int `json:"max_site_meter_power_kW"`
@@ -49,9 +49,9 @@ type SiteInfo struct{
 	} `json:"grid_code"`
 }
 
-func (c *Client) GetSiteInfo() (*SiteInfo, error) {
+func (c *Client) GetSiteInfo() (*SiteInfoData, error) {
 	c.checkLogin()
-	result := SiteInfo{}
+	result := SiteInfoData{}
 	err := c.apiGetJson("site_info", &result)
 	return &result, err
 }

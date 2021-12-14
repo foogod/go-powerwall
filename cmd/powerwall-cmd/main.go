@@ -127,7 +127,7 @@ func main() {
 		}
 		writeResult(result)
 	case "meter":
-		result, err := c.GetMeterInfo(options.Args.Args[0])
+		result, err := c.GetMeters(options.Args.Args[0])
 		if err != nil {
 			panic(err)
 		}

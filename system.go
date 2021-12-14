@@ -4,7 +4,7 @@ import "time"
 
 ///////////////////////////////////////////////////////////////////////////////
 
-type SystemStatus struct {
+type SystemStatusData struct {
 	CommandSource                  string  `json:"command_source"`
 	BatteryTargetPower             float32 `json:"battery_target_power"`
 	BatteryTargetReactivePower     float32     `json:"battery_target_reactive_power"`
@@ -24,7 +24,7 @@ type SystemStatus struct {
 		Type                   string        `json:"Type"`
 		PackagePartNumber      string        `json:"PackagePartNumber"`
 		PackageSerialNumber    string        `json:"PackageSerialNumber"`
-		DisabledReasons        []interface{} `json:"disabled_reasons"`
+		DisabledReasons        []interface{} `json:"disabled_reasons"` // TODO: Unclear what type these entries are when present.
 		PinvState              string        `json:"pinv_state"`
 		PinvGridState          string        `json:"pinv_grid_state"`
 		NominalEnergyRemaining float32           `json:"nominal_energy_remaining"`
@@ -48,7 +48,7 @@ type SystemStatus struct {
 	FfrPowerAvailabilityLow    float32           `json:"ffr_power_availability_low"`
 	LoadChargeConstraint       float32           `json:"load_charge_constraint"`
 	MaxSustainedRampRate       float32           `json:"max_sustained_ramp_rate"`
-	GridFaults                 []GridFault `json:"grid_faults"`
+	GridFaults                 []GridFaultData `json:"grid_faults"`
 	CanReboot                  string        `json:"can_reboot"`
 	SmartInvDeltaP             float32           `json:"smart_inv_delta_p"`
 	SmartInvDeltaQ             float32           `json:"smart_inv_delta_q"`
@@ -63,16 +63,16 @@ type SystemStatus struct {
 	ExpectedEnergyRemaining    float32           `json:"expected_energy_remaining"`
 }
 
-func (c *Client) GetSystemStatus() (*SystemStatus, error) {
+func (c *Client) GetSystemStatus() (*SystemStatusData, error) {
 	c.checkLogin()
-	result := SystemStatus{}
+	result := SystemStatusData{}
 	err := c.apiGetJson("system_status", &result)
 	return &result, err
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-type GridFault struct {
+type GridFaultData struct {
 	Timestamp              int64  `json:"timestamp"`
 	AlertName              string `json:"alert_name"`
 	AlertIsFault           bool   `json:"alert_is_fault"`
@@ -85,16 +85,16 @@ type GridFault struct {
 	EcuPackageSerialNumber string `json:"ecu_package_serial_number"`
 }
 
-func (c *Client) GetGridFaults() (*[]GridFault, error) {
+func (c *Client) GetGridFaults() (*[]GridFaultData, error) {
 	c.checkLogin()
-	result := []GridFault{}
+	result := []GridFaultData{}
 	err := c.apiGetJson("system_status/grid_faults", &result)
 	return &result, err
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-type GridStatus struct {
+type GridStatusData struct {
 	GridStatus         string `json:"grid_status"`
 	GridServicesActive bool   `json:"grid_services_active"`
 }
@@ -105,9 +105,9 @@ const (
 	GridStatusTransition = "SystemTransitionToGrid"
 )
 
-func (c *Client) GetGridStatus() (*GridStatus, error) {
+func (c *Client) GetGridStatus() (*GridStatusData, error) {
 	c.checkLogin()
-	result := GridStatus{}
+	result := GridStatusData{}
 	err := c.apiGetJson("system_status/grid_status", &result)
 	return &result, err
 }
