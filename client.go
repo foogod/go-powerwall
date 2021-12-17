@@ -1,3 +1,8 @@
+// Functions for configuring the client object:
+//
+//   (*Client) FetchTLSCert()
+//   (*Client) SetTLSCert(cert)
+//
 package powerwall
 
 import (
@@ -15,16 +20,27 @@ import (
 
 var logFunc = func(v ...interface{}) {}
 
+// SetLogFunc registers a callback function which can be used for debug logging
+// of the powerwall library.  The provided function should accept arguments in
+// the same format as Printf/Sprintf/etc.  Note that log lines passed to this
+// function are *not* newline-terminated, so you will need to add newlines if
+// you want to put them out directly to stdout/stderr, etc.
 func SetLogFunc(f func(...interface{})) {
 	logFunc = f
 }
 
 var errFunc = func(string, error) {}
 
+// SetErrFunc registers a callback function which will be called with
+// additional information when certain errors occur.  This can be useful if you
+// don't want full debug logging, but still want to log additional information
+// that might be helpful when troubleshooting, for example, API message format
+// errors, etc.
 func SetErrFunc(f func(string, error)) {
 	errFunc = f
 }
 
+// Client represents a connection to a Tesla Energy Gateway (Powerwall controller).
 type Client struct {
 	gatewayAddress       string
 	gatewayLoginEmail    string
@@ -34,15 +50,16 @@ type Client struct {
 	auth_ch              chan *authMessage
 }
 
-func (c *Client) logf(format string, v ...interface{}) {
-	logFunc(fmt.Sprintf("{%p} ", c) + fmt.Sprintf(format, v...))
-}
-
-func (c *Client) jsonError(api string, data []byte, err error) {
-	msg := fmt.Sprintf("Error unmarshalling '%s' response %s", api, string(data))
-	errFunc(msg, err)
-}
-
+// NewClient creates a new Client object.  gatewayAddress should be the IP
+// address or hostname of the Tesla Energy Gateway (TEG) device which is
+// connected to the network.  gatewayLoginEmail and gatewayLoginPassword are
+// the same as the email address and password which would be used for a
+// "customer" login, when logging in via the web interface (Note: This is not
+// necessarily the same password as used to login to Tesla's servers via the
+// app, which can be different)
+//
+// For more information on logging into an Energy Gateway, see
+// https://www.tesla.com/support/energy/powerwall/own/monitoring-from-home-network
 func NewClient(gatewayAddress string, gatewayLoginEmail string, gatewayLoginPassword string) *Client {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -76,6 +93,20 @@ func NewClient(gatewayAddress string, gatewayLoginEmail string, gatewayLoginPass
 	return c
 }
 
+func (c *Client) logf(format string, v ...interface{}) {
+	logFunc(fmt.Sprintf("{%p} ", c) + fmt.Sprintf(format, v...))
+}
+
+func (c *Client) jsonError(api string, data []byte, err error) {
+	msg := fmt.Sprintf("Error unmarshalling '%s' response %s", api, string(data))
+	errFunc(msg, err)
+}
+
+// SetTLSCert sets the TLS certificate which should be used for validating the
+// certificate presented when connecting to the gateway is correct.  You can
+// obtain the current certificate in use by the gateway initially via
+// `FetchTLSCert`, and then supply it via this function whenever creating a new
+// connection to ensure the certificate matches the previously fetched one.
 func (c *Client) SetTLSCert(cert *x509.Certificate) {
 	certPool := x509.NewCertPool()
 	certPool.AddCert(cert)
@@ -85,6 +116,9 @@ func (c *Client) SetTLSCert(cert *x509.Certificate) {
 	c.logf("Set TLS cert for validation: %s", cert.Subject)
 }
 
+// FetchTLSCert queries the gateway and returns a copy of the TLS certificate
+// it is currently presenting for connections.  This is useful for saving and
+// later using with `SetTLSCert` to validate future connections.
 func (c *Client) FetchTLSCert() (*x509.Certificate, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,

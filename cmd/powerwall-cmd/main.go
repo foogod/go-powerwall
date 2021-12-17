@@ -1,3 +1,7 @@
+// powerwall-cmd is a simple command-line utility which uses the powerwall
+// module to access the Tesla Powerwall API.
+//
+// This is mainly intended as a simple way to test the library functions and as an example of use.
 package main
 
 import (
@@ -24,7 +28,7 @@ var options struct {
 	AuthCache string `long:"authcache" description:"Filename to store/load auth token"`
 	CertFile  string `long:"certfile" description:"Filename of TLS certificate to use for validation"`
 	Args      struct {
-		Command string   `positional-arg-name:"command" description:"One of 'status', 'login', 'site_info', 'fetchcert', 'aggregates', 'meter', 'system_status', 'grid_faults', 'grid_status', 'soe', 'operation', 'sitemaster', 'networks'"`
+		Command string   `positional-arg-name:"command" description:"One of 'status', 'login', 'site_info', 'fetchcert', 'aggregates', 'meters', 'system_status', 'grid_faults', 'grid_status', 'soe', 'operation', 'sitemaster', 'networks'"`
 		Args    []string `positional-arg-name:"args" description:"Optional arguments depending on command"`
 	} `positional-args:"true" required:"true"`
 }
@@ -126,7 +130,7 @@ func main() {
 			panic(err)
 		}
 		writeResult(result)
-	case "meter":
+	case "meters":
 		result, err := c.GetMeters(options.Args.Args[0])
 		if err != nil {
 			panic(err)

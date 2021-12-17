@@ -1,3 +1,11 @@
+// Functions for authentication and login:
+//
+// (Note: DoLogin generally does not need to be called explicitly)
+//
+//   (*Client) DoLogin()
+//   (*Client) GetAuthToken()
+//   (*Client) SetAuthToken(token string)
+//
 package powerwall
 
 import (
@@ -18,6 +26,11 @@ type authMessage struct {
 	result_ch chan error
 }
 
+// DoLogin logs into the Powerwall gateway and obtains an auth token which can
+// be used for subsequent API calls.  Note that you should not normally need to
+// call this explicitly.  The library will automatically attempt to login
+// anyway if a call is made which requires authentication and it is not already
+// successfully logged in.
 func (c *Client) DoLogin() error {
 	action := authMessage{
 		action:    cmd_DO_LOGIN,
@@ -40,10 +53,15 @@ func (c *Client) checkLogin() error {
 	return <-action.result_ch
 }
 
+// GetAuthToken returns the current auth token in use.  This can be saved and
+// then passed to SetAuthToken on later connections to re-use the same token
+// across Clients.
 func (c *Client) GetAuthToken() string {
 	return <-c.token_ch
 }
 
+// SetAuthToken sets the provided string as the new auth token to use for
+// subsequent API calls.
 func (c *Client) SetAuthToken(token string) {
 	c.auth_ch <- &authMessage{action: cmd_SET_TOKEN, token: token}
 	// Wait until we are sure the manager is returning the updated token before returning.

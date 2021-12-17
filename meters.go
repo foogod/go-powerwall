@@ -1,3 +1,8 @@
+// Functions for reading power meter data:
+//
+//   (*Client) GetMeters(category string)
+//   (*Client) GetMetersAggregates()
+//
 package powerwall
 
 import (
@@ -7,6 +12,11 @@ import (
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// MeterAggregatesData contains fields returned by the "meters/aggregates" API
+// call.  This reflects statistics collected across all of the meters in a
+// given category (e.g. "site", "solar", "battery", "load", etc).
+//
+// This structure is returned by the GetMetersAggregates function.
 type MeterAggregatesData struct {
 	LastCommunicationTime             time.Time `json:"last_communication_time"`
 	InstantPower                      float32   `json:"instant_power"`
@@ -27,6 +37,10 @@ type MeterAggregatesData struct {
 	InstantTotalCurrent               float32   `json:"instant_total_current"`
 }
 
+// GetMetersAggregates fetches aggregated meter data for power transferred
+// to/from each category of connection ("site", "solar", "battery", "load", etc).
+//
+// See the MetersAggregatesData type for more information on what fields this returns.
 func (c *Client) GetMetersAggregates() (*map[string]MeterAggregatesData, error) {
 	c.checkLogin()
 	result := map[string]MeterAggregatesData{}
@@ -36,6 +50,10 @@ func (c *Client) GetMetersAggregates() (*map[string]MeterAggregatesData, error) 
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// MeterData contains fields returned by the "meters/<category>" API call, which
+// returns information for each individual meter within that category.
+//
+// A list of this structure is returned by the GetMeters function.
 type MeterData struct {
 	ID         int    `json:"id"`
 	Location   string `json:"location"`
@@ -85,9 +103,17 @@ type MeterData struct {
 	} `json:"ct_voltage_references"`
 }
 
-func (c *Client) GetMeters(meter string) (*[]MeterData, error) {
+// GetMeters fetches detailed meter data for each meter under the specified
+// category.  Note that as of this writing, only the "site" and "solar"
+// categories appear to return any data.
+//
+// If the API returns no data (i.e. an unsupported category name was provided),
+// this will return nil.
+//
+// See the MeterData type for more information on what fields this returns.
+func (c *Client) GetMeters(category string) (*[]MeterData, error) {
 	c.checkLogin()
 	result := []MeterData{}
-	err := c.apiGetJson("meters/"+url.PathEscape(meter), &result)
+	err := c.apiGetJson("meters/"+url.PathEscape(category), &result)
 	return &result, err
 }

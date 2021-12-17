@@ -1,7 +1,15 @@
+// Functions for reading network interface info:
+//
+//   (*Client) GetNetworks()
+//
 package powerwall
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// NetworkData contains information returned by the "networks" API call for a
+// particular network interface.
+//
+// A list of this structure is returned by the GetNetworks function.
 type NetworkData struct {
 	NetworkName string `json:"network_name"`
 	Interface   string `json:"interface"`
@@ -32,6 +40,10 @@ type NetworkData struct {
 	Username     string `json:"username"`
 }
 
+// GetNetworks returns information about all of the network interfaces in the
+// system, and their statuses.
+//
+// See the NetworkData type for more information on what fields this returns.
 func (c *Client) GetNetworks() (*[]NetworkData, error) {
 	c.checkLogin()
 	result := []NetworkData{}

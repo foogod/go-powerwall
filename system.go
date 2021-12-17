@@ -1,9 +1,22 @@
+// Functions for getting info about the system state:
+//
+//   (*Client) GetSystemStatus()
+//   (*Client) GetGridFaults()
+//   (*Client) GetGridStatus()
+//   (*Client) GetSOE()
+//   (*Client) GetOperation()
+//
 package powerwall
 
 import "time"
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// SystemStatusData contains fields returned by the "system_status" API call.
+// This contains a lot of information about the general state of the system and
+// how it is operating, such as battery charge, utility power status, etc.
+//
+// This structure is returned by the GetSystemStatus function.
 type SystemStatusData struct {
 	CommandSource                  string  `json:"command_source"`
 	BatteryTargetPower             float32 `json:"battery_target_power"`
@@ -63,6 +76,10 @@ type SystemStatusData struct {
 	ExpectedEnergyRemaining    float32         `json:"expected_energy_remaining"`
 }
 
+// GetSystemStatus performs a "system_status" API call to fetch general
+// information about the system operation and state. 
+//
+// See the SystemStatusData type for more information on what fields this returns.
 func (c *Client) GetSystemStatus() (*SystemStatusData, error) {
 	c.checkLogin()
 	result := SystemStatusData{}
@@ -72,6 +89,9 @@ func (c *Client) GetSystemStatus() (*SystemStatusData, error) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// GridFaultData contains fields returned by the "system_status/grid_faults" API call.
+//
+// This structure is returned by the GetSystemStatus and GetGridFaults functions.
 type GridFaultData struct {
 	Timestamp              int64        `json:"timestamp"`
 	AlertName              string       `json:"alert_name"`
@@ -85,6 +105,14 @@ type GridFaultData struct {
 	EcuPackageSerialNumber string       `json:"ecu_package_serial_number"`
 }
 
+// GetGridFaults returns a list of any current "grid fault" events detected by
+// the system.  These generally indicate some issue with the utility power,
+// such as being over or undervoltage, etc.
+//
+// This same information is also returned by GetSystemStatus in the GridFaults
+// field.
+//
+// See the GridFaultData type for more information on what fields this returns.
 func (c *Client) GetGridFaults() (*[]GridFaultData, error) {
 	c.checkLogin()
 	result := []GridFaultData{}
@@ -94,17 +122,34 @@ func (c *Client) GetGridFaults() (*[]GridFaultData, error) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// GridStatusData contains fields returned by the "system_status/grid_status" API call.
+//
+// This structure is returned by the GetGridStatus function.
 type GridStatusData struct {
 	GridStatus         string `json:"grid_status"`
 	GridServicesActive bool   `json:"grid_services_active"`
 }
 
+// Possible options for the GridStatus field of GridStatusData:
+//
+// The powerwall can be in one of three states.  "Connected" indicates that it
+// is receiving power from the utility and functioning normally.  "Islanded"
+// means that it has gone off-grid and is generating power entirely
+// independently of the utility power (if utility power has been lost, or if it
+// has been put into "off-grid" mode).  "Transitioning" means that it is in the
+// process of going from being off-grid to back on-grid, which can take a
+// little bit of time to verify the supplied power is clean and synchronize
+// with it, etc.
 const (
 	GridStatusConnected  = "SystemGridConnected"
 	GridStatusIslanded   = "SystemIslandedActive"
 	GridStatusTransition = "SystemTransitionToGrid"
 )
 
+// GetGridStatus returns information about the current state of the Powerwall's
+// connection to the utility power grid.
+//
+// See the GridStatusData type for more information on what fields this returns.
 func (c *Client) GetGridStatus() (*GridStatusData, error) {
 	c.checkLogin()
 	result := GridStatusData{}
@@ -114,10 +159,20 @@ func (c *Client) GetGridStatus() (*GridStatusData, error) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// SOEData contains fields returned by the "system_status/soe" API call.
+// This currently just returns a single "Percentage" field, indicating the
+// total amount of charge across all batteries.
+//
+// This structure is returned by the GetSOE function.
 type SOEData struct {
 	Percentage float32 `json:"percentage"`
 }
 
+// GetSOE returns information about the current "State Of Energy" of the
+// system.  That is, how much total charge (as a percentage) is present across
+// all batteries.
+//
+// See the SOEData type for more information on what fields this returns.
 func (c *Client) GetSOE() (*SOEData, error) {
 	c.checkLogin()
 	result := SOEData{}
@@ -127,6 +182,9 @@ func (c *Client) GetSOE() (*SOEData, error) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// OperationData contains fields returned by the "operation" API call.
+//
+// This structure is returned by the GetOperation function.
 type OperationData struct {
 	RealMode                string  `json:"real_mode"`
 	BackupReservePercent    float32 `json:"backup_reserve_percent"`
@@ -134,9 +192,22 @@ type OperationData struct {
 	FreqShiftLoadShedDeltaF float64 `json:"freq_shift_load_shed_delta_f"`
 }
 
+// Possible options for the RealMode field of OperationData:
+const (
+	OperationModeSelf = "self_consumption" // Reported as "Self Powered" in the app
+	OperationModeTimeBased = "autonomous" // Reported as "Time-Based Control" in the app
+)
+
+// GetOperation returns information about the current operation mode
+// configuration.  This includes whether the Powerwall is configured for "Self
+// Powered" mode or "Time Based Control", how much of the battery is reserved
+// for backup use, etc.
+//
+// See the OperationData type for more information on what fields this returns.
 func (c *Client) GetOperation() (*OperationData, error) {
 	c.checkLogin()
 	result := OperationData{}
 	err := c.apiGetJson("operation", &result)
 	return &result, err
 }
+
