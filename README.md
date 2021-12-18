@@ -6,7 +6,7 @@ A Go library for communicating with Tesla Powerwall appliances via the local-net
 
 ***Many thanks to [Vince Loschiavo](https://github.com/vloschiavo) and other contributors to https://github.com/vloschiavo/powerwall2 for providing a lot of the information to make this possible!***
 
-**Note:** The Tesla powerwall interface is an undocumented API which is not supported by Tesla, and could change at any time.  This library has been tested on devices running version 21.39 of the firmware only, at this time.
+**Note:** The Tesla powerwall interface is an undocumented API which is not supported by Tesla, and could change at any time.  This library has been tested on devices running version 21.39 and 21.44 of the firmware only, at this time.
 
 **This library is incomplete.**  Pull requests to add support for more functions are always welcome!
 
@@ -61,8 +61,8 @@ To work around this, the client can be configured to retry HTTP requests for a g
 
 ```go
 	// Retry attempts every second, giving up after a minute of failed attempts.
-	interval := time.Duration("1s")
-	timeout := time.Duration("60s")
+	interval := time.ParseDuration("1s")
+	timeout := time.ParseDuration("60s")
 	client.SetRetry(interval, timeout)
 ```
 
