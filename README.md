@@ -53,6 +53,23 @@ The certificate can be obtained using command-line utilities such as `openssl`; 
 
 The typical use-case of this would be to provide a special option or command in your program to fetch and store the certificate in a file initially, and from then on read it from the file and use that to set the certificate when creating any new clients going forward, before performing any API calls.  For an example of this, see the `--certfile` and `fetchcert` options of the [powerwall-cmd](cmd/powerwall-cmd/main.go) sample program in this repo.
 
+## Retrying requests
+
+Tesla's Powerwall appliances seem to have some issues staying reliably connected to WiFi networks (for me, at least), and will periodically become disconnected for a few seconds and then reconnect.  This can cause a problem if you happen to hit your API request at the wrong time, as you will just end up with a network error instead.
+
+To work around this, the client can be configured to retry HTTP requests for a given amount of time before actually giving up, if they are failing because of network connection errors.  This can be done by calling the SetRetry function with the desired retry interval and timeout:
+
+```go
+	// Retry attempts every second, giving up after a minute of failed attempts.
+	interval := time.Duration("1s")
+	timeout := time.Duration("60s")
+	client.SetRetry(interval, timeout)
+```
+
+The client will wait at least the specified interval between attempts (but it may sometimes be longer if, for example, a connection timeout takes longer than that interval just to return the error).  It will keep trying until the timeout has been exceeded (doing however many retries it can fit within that period).
+
+This behavior is disabled by default.  Setting the timeout to zero (or negative) will also disable all retries.  (Note that setting interval to zero (or negative) is also allowed, but will result in the library attempting to retry as fast as possible, which may produce excessive network traffic or CPU usage, so it is not generally advised.)
+
 ## Saving and re-using the auth token
 
 If you are making a program which needs to regularly create new clients (such as a command-line utility which gets run on a regular basis to collect stats and then exit, etc), it may be desirable to save the auth token after login so that it can be re-used later.  This can be done using the `GetAuthToken` and `SetAuthToken` functions:

@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/jessevdk/go-flags"
 
@@ -27,6 +28,8 @@ var options struct {
 	Password  string `long:"password" description:"Password to use when logging in"`
 	AuthCache string `long:"authcache" description:"Filename to store/load auth token"`
 	CertFile  string `long:"certfile" description:"Filename of TLS certificate to use for validation"`
+	RetryTimeout time.Duration `long:"retry-timeout" description:"How long to keep trying to reach the gateway before giving up (default: no retries)"`
+	RetryInterval time.Duration `long:"retry-interval" description:"How long to wait between retries" default:"1s"`
 	Args      struct {
 		Command string   `positional-arg-name:"command" description:"One of 'status', 'login', 'site_info', 'fetchcert', 'aggregates', 'meters', 'system_status', 'grid_faults', 'grid_status', 'soe', 'operation', 'sitemaster', 'networks'"`
 		Args    []string `positional-arg-name:"args" description:"Optional arguments depending on command"`
@@ -56,6 +59,7 @@ func main() {
 	powerwall.SetErrFunc(logError)
 
 	c := powerwall.NewClient(options.Address, options.Email, options.Password)
+	c.SetRetry(options.RetryInterval, options.RetryTimeout)
 
 	if options.CertFile != "" && options.Args.Command != "fetchcert" {
 		pemCert, err := ioutil.ReadFile(options.CertFile)

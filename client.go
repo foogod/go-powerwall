@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -48,6 +49,8 @@ type Client struct {
 	httpClient           http.Client
 	token_ch             chan string
 	auth_ch              chan *authMessage
+	retryInterval        time.Duration
+	retryTimeout         time.Duration
 }
 
 // NewClient creates a new Client object.  gatewayAddress should be the IP
@@ -133,6 +136,43 @@ func (c *Client) FetchTLSCert() (*x509.Certificate, error) {
 	return certs[0], nil
 }
 
+// SetRetry sets the retry interval and timeout used when making HTTP requests.
+// Setting timeout to zero (or negative) will disable retries (default).
+//
+// (Note: The client will only attempt retries on network errors (connection
+// timed out, etc), not other issues)
+func (c *Client) SetRetry(interval time.Duration, timeout time.Duration) {
+	c.retryInterval = interval
+	c.retryTimeout = timeout
+	c.logf("Configured retry settings: interval=%s timeout=%s", interval, timeout)
+}
+
+func (c *Client) httpDo(req *http.Request) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+
+	start_time := time.Now()
+	for {
+		attempt_time := time.Now()
+		resp, err = c.httpClient.Do(req)
+		if _, ok := err.(net.Error); !ok {
+			// We only retry on net.Error
+			break
+		}
+		if time.Now().Sub(start_time) >= c.retryTimeout {
+			// We've retried as long as we can.  Give up.
+			break
+		}
+		c.logf("Network error fetching API. Retrying... (err=%s)", err)
+		// Depending on how long it took to return the error, we may
+		// have already used some or all of the time of the retry
+		// interval, so figure out how much (if any) is remaining to
+		// wait.
+		time.Sleep(c.retryInterval - (time.Now().Sub(attempt_time)))
+	}
+	return resp, err
+}
+
 func (c *Client) doHttpRequest(api string, method string, payload []byte, contentType string) ([]byte, error) {
 	type errorResponse struct {
 		Code    int    `json:"code"`
@@ -168,7 +208,7 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 	if strings.HasPrefix(api, "login/") {
 		// If we're doing a login API call, don't set the auth cookie,
 		// or attempt to retry on auth issues.
-		resp, err = c.httpClient.Do(req)
+		resp, err = c.httpDo(req)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +222,7 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 			req.AddCookie(cookie)
 		}
 
-		resp, err = c.httpClient.Do(req)
+		resp, err = c.httpDo(req)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +243,7 @@ func (c *Client) doHttpRequest(api string, method string, payload []byte, conten
 			}
 			req.Header.Del("Cookie")
 			req.AddCookie(cookie)
-			resp, err = c.httpClient.Do(req)
+			resp, err = c.httpDo(req)
 			if err != nil {
 				return nil, err
 			}
