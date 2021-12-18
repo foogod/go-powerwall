@@ -77,7 +77,7 @@ type SystemStatusData struct {
 }
 
 // GetSystemStatus performs a "system_status" API call to fetch general
-// information about the system operation and state. 
+// information about the system operation and state.
 //
 // See the SystemStatusData type for more information on what fields this returns.
 func (c *Client) GetSystemStatus() (*SystemStatusData, error) {
@@ -194,8 +194,8 @@ type OperationData struct {
 
 // Possible options for the RealMode field of OperationData:
 const (
-	OperationModeSelf = "self_consumption" // Reported as "Self Powered" in the app
-	OperationModeTimeBased = "autonomous" // Reported as "Time-Based Control" in the app
+	OperationModeSelf      = "self_consumption" // Reported as "Self Powered" in the app
+	OperationModeTimeBased = "autonomous"       // Reported as "Time-Based Control" in the app
 )
 
 // GetOperation returns information about the current operation mode
@@ -210,4 +210,3 @@ func (c *Client) GetOperation() (*OperationData, error) {
 	err := c.apiGetJson("operation", &result)
 	return &result, err
 }
-

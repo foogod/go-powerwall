@@ -106,7 +106,7 @@ type SitemasterData struct {
 
 // Possible values for the Status field of the SitemasterData struct:
 const (
-	SitemasterStatusUp = "StatusUp"
+	SitemasterStatusUp   = "StatusUp"
 	SitemasterStatusDown = "StatusDown"
 )
 
@@ -115,7 +115,7 @@ const (
 //
 // (Note that this list is almost certainly incomplete at this point)
 const (
-	SitemasterRebootOK = "Yes"
+	SitemasterRebootOK           = "Yes"
 	SitemasterRebootPowerTooHigh = "Power flow is too high"
 )
 
