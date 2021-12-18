@@ -81,6 +81,8 @@ If you are making a program which needs to regularly create new clients (such as
 
 (Note that the client must have already performed a login before you will be able to retrieve a valid token with `GetAuthToken`.  This will happen automatically if you attempt to fetch from an API which requires authentication, or you can use `DoLogin` initially to force a login operation first.)
 
+Keep in mind that the client will automatically re-login (and thus generate a new auth token) if the provided one is invalid (it has expired, etc).  It is therefore a good idea to check periodically whether the token has changed (using GetAuthToken), and if so update your saved copy as well.
+
 For an example of this, see the `--authcache` option of the [powerwall-cmd](cmd/powerwall-cmd/main.go) sample program in this repo.
 
 ## Logging
