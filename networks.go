@@ -44,9 +44,9 @@ type NetworkData struct {
 // system, and their statuses.
 //
 // See the NetworkData type for more information on what fields this returns.
-func (c *Client) GetNetworks() (*[]NetworkData, error) {
+func (c *Client) GetNetworks() ([]NetworkData, error) {
 	c.checkLogin()
 	result := []NetworkData{}
 	err := c.apiGetJson("networks", &result)
-	return &result, err
+	return result, err
 }
