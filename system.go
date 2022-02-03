@@ -113,11 +113,11 @@ type GridFaultData struct {
 // field.
 //
 // See the GridFaultData type for more information on what fields this returns.
-func (c *Client) GetGridFaults() (*[]GridFaultData, error) {
+func (c *Client) GetGridFaults() ([]GridFaultData, error) {
 	c.checkLogin()
 	result := []GridFaultData{}
 	err := c.apiGetJson("system_status/grid_faults", &result)
-	return &result, err
+	return result, err
 }
 
 ///////////////////////////////////////////////////////////////////////////////
