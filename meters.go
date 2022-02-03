@@ -41,11 +41,11 @@ type MeterAggregatesData struct {
 // to/from each category of connection ("site", "solar", "battery", "load", etc).
 //
 // See the MetersAggregatesData type for more information on what fields this returns.
-func (c *Client) GetMetersAggregates() (*map[string]MeterAggregatesData, error) {
+func (c *Client) GetMetersAggregates() (map[string]MeterAggregatesData, error) {
 	c.checkLogin()
 	result := map[string]MeterAggregatesData{}
 	err := c.apiGetJson("meters/aggregates", &result)
-	return &result, err
+	return result, err
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,9 +111,9 @@ type MeterData struct {
 // this will return nil.
 //
 // See the MeterData type for more information on what fields this returns.
-func (c *Client) GetMeters(category string) (*[]MeterData, error) {
+func (c *Client) GetMeters(category string) ([]MeterData, error) {
 	c.checkLogin()
 	result := []MeterData{}
 	err := c.apiGetJson("meters/"+url.PathEscape(category), &result)
-	return &result, err
+	return result, err
 }
