@@ -46,7 +46,7 @@ type Client struct {
 	gatewayAddress       string
 	gatewayLoginEmail    string
 	gatewayLoginPassword string
-	httpClient           http.Client
+	httpClient           *http.Client
 	token_ch             chan string
 	auth_ch              chan *authMessage
 	retryInterval        time.Duration
@@ -63,21 +63,9 @@ type Client struct {
 //
 // For more information on logging into an Energy Gateway, see
 // https://www.tesla.com/support/energy/powerwall/own/monitoring-from-home-network
-func NewClient(gatewayAddress string, gatewayLoginEmail string, gatewayLoginPassword string) *Client {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			// The TEG apparently requires a valid SNI hostname
-			// matching its cert, or it will just bomb out and
-			// terminate the connection during TLS negotiation
-			// (even if we're not checking the cert), so we
-			// override the TLS ServerName here to use one of its
-			// (hardcoded) stock names for all connections.
-			ServerName: "powerwall",
-		},
-	}
-	httpClient := http.Client{
-		Transport: tr,
+func NewClient(gatewayAddress, gatewayLoginEmail, gatewayLoginPassword string, options ...func(c *Client)) *Client {
+	httpClient := &http.Client{
+		Transport: DefaultTransport(),
 		Timeout:   time.Second * 2, // Timeout after 2 seconds
 	}
 
@@ -90,10 +78,39 @@ func NewClient(gatewayAddress string, gatewayLoginEmail string, gatewayLoginPass
 		auth_ch:              make(chan *authMessage),
 	}
 
+	for _, option := range options {
+		if option != nil {
+			option(c)
+		}
+	}
+
 	go c.authManager()
 
 	c.logf("New powerwall client created: gateway_address=%s email=%s", gatewayAddress, gatewayLoginEmail)
 	return c
+}
+
+// WithHttpClient sets the HTTP client to use for all requests
+func WithHttpClient(httpClient *http.Client) func(c *Client) {
+	return func(c *Client) {
+		c.httpClient = httpClient
+	}
+}
+
+// DefaultTransport returns an HTTP transport with required TLS config
+func DefaultTransport() *http.Transport {
+	return &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			// The TEG apparently requires a valid SNI hostname
+			// matching its cert, or it will just bomb out and
+			// terminate the connection during TLS negotiation
+			// (even if we're not checking the cert), so we
+			// override the TLS ServerName here to use one of its
+			// (hardcoded) stock names for all connections.
+			ServerName: "powerwall",
+		},
+	}
 }
 
 func (c *Client) logf(format string, v ...interface{}) {
