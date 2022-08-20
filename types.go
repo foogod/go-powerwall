@@ -2,6 +2,8 @@ package powerwall
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -60,14 +62,15 @@ type DecodedAlert map[string]string
 
 func (v *DecodedAlert) UnmarshalJSON(data []byte) error {
 	type entry struct {
-		Name  string `json:"name"`
-		Value string `json:"value"`
+		Name  string      `json:"name"`
+		Value interface{} `json:"value"`
+		Units interface{} `json:"units"`
 	}
 
 	strvalue := ""
 	err := json.Unmarshal(data, &strvalue)
 	if err != nil {
-		return err
+		return fmt.Errorf("error unmarshalling grid alert %s into string: %w", strvalue, err)
 	}
 	if strvalue == "" {
 		// For an empty string, just return a nil map
@@ -76,11 +79,24 @@ func (v *DecodedAlert) UnmarshalJSON(data []byte) error {
 	entries := []entry{}
 	err = json.Unmarshal([]byte(strvalue), &entries)
 	if err != nil {
-		return err
+		return fmt.Errorf("error unmarshalling grid alert %s: %w", strvalue, err)
 	}
 	*v = make(map[string]string, len(entries))
 	for _, e := range entries {
-		(*v)[e.Name] = e.Value
+		if iv, ok := e.Value.(int); ok {
+			(*v)[e.Name] = strconv.Itoa(iv)
+		} else if fv, ok := e.Value.(float64); ok {
+			(*v)[e.Name] = strconv.FormatFloat(fv, 'f', -1, 64)
+		} else if sv, ok := e.Value.(string); ok {
+			(*v)[e.Name] = sv
+		} else if bv, ok := e.Value.([]byte); ok {
+			(*v)[e.Name] = fmt.Sprintf("%q", bv)
+		} else {
+			(*v)[e.Name] = fmt.Sprintf("unrecognized type %v", e)
+		}
+		if uv, ok := e.Units.(string); ok && (*v)[e.Name] != "" && uv != "" {
+			(*v)[e.Name] += " " + uv
+		}
 	}
 	return nil
 }
