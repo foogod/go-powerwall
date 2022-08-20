@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -126,7 +127,11 @@ func (c *Client) FetchTLSCert() (*x509.Certificate, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
-	conn, err := tls.Dial("tcp", c.gatewayAddress+":443", tlsConfig)
+	address := c.gatewayAddress
+	if !regexp.MustCompile(`:\d+$`).MatchString(address) {
+		address += ":443"
+	}
+	conn, err := tls.Dial("tcp", address, tlsConfig)
 	if err != nil {
 		return nil, err
 	}
